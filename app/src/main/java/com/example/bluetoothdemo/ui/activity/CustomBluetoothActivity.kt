@@ -4,6 +4,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothClass.Device
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
@@ -15,7 +17,10 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.bluetoothdemo.DeviceBean
 import com.example.bluetoothdemo.R
+import com.example.bluetoothdemo.adapter.BLEDeviceAdapter
 import com.example.bluetoothdemo.base.BaseActivity
 import com.example.bluetoothdemo.databinding.ActivityCustomBluetoothBinding
 import com.example.bluetoothdemo.ui.utils.showMsg
@@ -32,6 +37,11 @@ class CustomBluetoothActivity : BaseActivity<ActivityCustomBluetoothBinding>() {
 
     //是否正在扫描
     var isScanning = false
+
+    val adapter = BLEDeviceAdapter()
+
+    val datas:MutableList<DeviceBean> = mutableListOf()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -82,6 +92,13 @@ class CustomBluetoothActivity : BaseActivity<ActivityCustomBluetoothBinding>() {
                 }
             }
         }
+
+        binding.recyclerView.run {
+
+            layoutManager = LinearLayoutManager(context)
+
+            adapter = this@CustomBluetoothActivity.adapter
+        }
     }
 
     override fun getViewBinding(): ActivityCustomBluetoothBinding {
@@ -129,11 +146,14 @@ class CustomBluetoothActivity : BaseActivity<ActivityCustomBluetoothBinding>() {
         @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val device = result.device
-            scanResultStr.append("\n\r")
             Log.d(TAG, "name: ${device.name}, address: ${device.address}")
-            scanResultStr.append("设备名称：${device.name}").append(" Mac地址:${device.address}")
-
-            binding.scanResult.text= scanResultStr
+            device.name?.let {
+                val deviceBean = DeviceBean(it, device.address)
+                if (!datas.contains(deviceBean)){
+                    datas.add(deviceBean)
+                    adapter.add(deviceBean)
+                }
+            }
         }
     }
 
